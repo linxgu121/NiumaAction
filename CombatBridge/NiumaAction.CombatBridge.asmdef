@@ -1,0 +1,16 @@
+{
+  "name": "NiumaAction.CombatBridge",
+  "references": [
+    "NiumaCore.Runtime",
+    "NiumaAction.Runtime",
+    "NiumaCombat.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": []
+}

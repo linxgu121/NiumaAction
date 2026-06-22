@@ -101,6 +101,40 @@ RaiseTimelineEventByIndex
 
 参数填写 `TimelineEvents` 数组下标。桥接会发布 `ActionTimelineEventRaisedEvent`，并使用与 `ActionService` 相同的 `TimelineEventKey` 规则，避免 TPC AnimationEvent 和 Tick 兜底重复触发同一个 HitboxOpen / HitboxClose。
 
+### NiumaActionCombatBridge
+
+第四阶段已加入 `NiumaAction.CombatBridge` 程序集。推荐在玩家对象下创建：
+
+```text
+PlayerRoot
+└── ActionBridge
+    ├── NiumaActionTPCBridge
+    └── NiumaActionCombatBridge
+```
+
+`NiumaActionCombatBridge` 只负责把 `ActionTimelineEventRaisedEvent` 里的 `HitboxOpen / HitboxClose` 转成 Combat Hitbox 开关，不计算伤害、不直接查找目标。真正的命中检测和伤害结算仍由 `NiumaCombat` 的 Hitbox / Hurtbox / CombatService 负责。
+
+| 字段 | 建议填写 | 可留空 | 说明 |
+| --- | --- | --- | --- |
+| `Combat Runtime Service Provider` | 拖核心场景 `CombatRoot` 上的 `NiumaCombatController` | 可以 | 留空且开启 Context 解析时，会从 `GameContext` 获取 `ICombatHitboxService` |
+| `Resolve Combat From Context` | 核心场景已注册 Combat 时开启 | 可以 | 关闭后只使用上方手动绑定或代码注入的 Combat 服务 |
+| `Action Service Instance Id` | 多个 ActionService 时填写目标 `ServiceInstanceId` | 可以 | 为空时不按 ServiceInstanceId 过滤 |
+| `Actor Id` | 例如 `player` | 可以 | 必须与 Action 输入使用的 ActorId 一致；为空时不过滤 ActorId |
+| `Subscribe Action Events` | 正式流程开启 | 可以 | 开启后订阅时间轴、取消和中断事件 |
+| `Use Default Hitbox Definition` | 需要兜底 Hitbox 时开启 | 可以 | 关闭后必须通过 `Hitbox Bindings` 匹配，否则不会打开 Hitbox |
+| `Default Hitbox Definition` | 开启默认 Hitbox 后填写 Combat Hitbox 定义 | 可以 | PayloadId 找不到绑定时使用；未开启默认时该字段不生效 |
+| `Hitbox Bindings` | Key 填 `TimelineEvent.PayloadId` 或 `EventId`，Definition 填对应 CombatHitboxDefinition | 可以 | 用于一段动画内多 Hitbox 通道，如 blade、kick、heavy |
+| `Close Hitboxes On Cancelled` | 建议开启 | 可以 | 动作正常结束、外部取消、连招切换时关闭该 RequestId 下所有已打开 Hitbox |
+| `Close Hitboxes On Interrupted` | 建议开启 | 可以 | TPC 动作被覆盖或打断时关闭该 RequestId 下所有已打开 Hitbox |
+| `Log Warnings` | 建议开启 | 可以 | 缺少 Combat 服务、Hitbox 配置或重复开关时输出 Warning |
+
+`AnimateAsset.TimelineEvents` 中：
+- `Type = HitboxOpen`：打开 Combat Hitbox。
+- `Type = HitboxClose`：关闭同一个 Hitbox。
+- `PayloadId`：推荐填写稳定通道 ID，例如 `blade`、`hitbox_main`。Open 和 Close 使用同一个 `PayloadId` 才能配对。
+
+桥接层会维护 `ActionAttackInstanceId -> CombatAttackInstanceId` 映射。Action 的 `AttackInstanceId` 用于跨来源配对，Combat 返回的运行时实例 ID 用于真正调用 `ICombatHitboxService.CloseHitbox`。
+
 ## 资产粒度
 
 ### AnimateAsset
@@ -212,11 +246,11 @@ RaiseTimelineEventByIndex
 - `NiumaAction.TPCBridge` 第一版使用 TPC 现有 `ActionRequest`，暂不精确映射 `AvatarMask / LayerMode / FadeOutSeconds`。
 - TPC 当前没有独立异步仲裁结果事件；`Precheck` 只做本地可提交校验，真正仲裁在 `Commit` 阶段；`Flush Immediately` 开启时，桥接通过读取 `RuntimeData.Override.Request` 确认是否被接受。
 - TPC 当前 `ActionRequest` 没有 `RequestId`，桥接第一版用 `Clip / MotionData / Priority / FadeDuration / ApplyGravity` 组合匹配当前 Override。若后续 TPC 扩展请求元数据，应优先改为 RequestId 级匹配。
-- `NiumaAction.CombatBridge` 尚未实现，HitboxOpen / HitboxClose 事件暂时不会真正调用 Combat。
+- `NiumaAction.CombatBridge` 已实现 HitboxOpen / HitboxClose 到 Combat HitboxService 的桥接；目标检测和伤害结算仍由 NiumaCombat 执行。
 - `NiumaAction.AudioBridge` 尚未实现，AudioCue 事件暂时不会真正播放声音。
 - 第一版不经过 `NiumaEquipment` 自动查询装备；武器动作来源由程序或测试脚本直接调用 `EquipWeaponSource` 传入。
 
 ## 版本
 
-当前模块包版本：`0.3.3`。 
+当前模块包版本：`0.4.0`。 
 Unity 最低版本：`6000.0.0`，项目基准为 Unity 6.0 `6000.0.75f1`。
