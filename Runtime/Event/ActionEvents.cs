@@ -94,6 +94,8 @@ namespace NiumaAction.Event
         public string ActorId;
         public string NodeId;
         public string ActionId;
+        // 用于跨来源去重。同一 RequestId 内，TPC AnimationEvent 与 Tick 兜底必须写入同一个 Key。
+        public string TimelineEventKey;
         // TimelineEvent.NormalizedTime 是资产配置的目标时间。
         public ActionTimelineEventData TimelineEvent;
         // NormalizedTime 是本次事件实际触发时的动画进度；Tick 兜底或 AnimationEvent 来源下可能与配置值有微小差异。

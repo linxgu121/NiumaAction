@@ -1,0 +1,16 @@
+{
+  "name": "com.niuma.action",
+  "displayName": "Niuma Action",
+  "version": "0.3.3",
+  "unity": "6000.0.0",
+  "description": "Niuma 近战动作与连招树模块。负责动作资产、输入缓冲、取消窗口和播放请求，不直接依赖 TPC / Combat 桥接程序集。",
+  "keywords": [
+    "niuma",
+    "action",
+    "combo",
+    "combat"
+  ],
+  "author": {
+    "name": "Niuma"
+  }
+}

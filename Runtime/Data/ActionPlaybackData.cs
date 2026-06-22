@@ -34,8 +34,8 @@ namespace NiumaAction.Data
         }
     }
 
-    // TPC 播放分为预检查和提交两个阶段；具体桥接可以同步确认，
-    // 也可以稍后通过事件确认，但结果都应使用这个结构表达。
+    // TPC 播放分为预检查和提交两个阶段；正式仲裁结果通过事件回传。
+    // 这个结构保留给 TPCBridge 内部、调试工具或轻量校验描述结果。
     [Serializable]
     public sealed class NiumaActionTPCPlaybackResult
     {
