@@ -205,6 +205,36 @@ PlayerRoot
 | `HoldStyleId` | 持握 / 架势 ID，第一版只作为 TPC 姿态切换预留 |
 | `DefaultComboTree` | 拖该武器默认使用的 `ComboTreeAsset` |
 
+## ComboTree 可视化编辑器
+
+第五阶段已加入 `NiumaAction.Editor` 编辑器程序集，只在 Unity Editor 中生效，不会进入运行时包体。
+
+打开方式：
+
+- 在 Project 面板选中 `ComboTreeAsset`，Inspector 顶部点击 `打开连招树可视化编辑器`。
+- 或使用菜单 `Tools / NiumaAction / Combo Tree Editor`，再在窗口顶部拖入 `ComboTreeAsset`。
+
+窗口布局：
+
+| 区域 | 用途 |
+| --- | --- |
+| 顶部 Toolbar | 选择资产、添加 / 复制 / 删除 / 上移 / 下移节点、聚焦起手节点、重建图、Fit All |
+| 左侧资产与节点列表 | 编辑 `ComboTreeId`、`DisplayName`、`StartNodeId`、`InputBufferSeconds`，并快速选择节点 |
+| 中间 Graph | 按 `Nodes` 数组显示节点，通过 `Transitions[].TargetNodeId` 自动连线 |
+| 右侧详情 | 编辑当前节点的 `NodeId`、`Action`、取消窗口和 `Transitions` |
+| 底部校验 | 显示重复 `NodeId`、缺失 `TargetNodeId`、取消窗口错误等问题，可点击聚焦到对应节点 |
+
+当前规则：
+
+- Graph 第一版只做可视化和选中同步，不支持拖线修改 Transition。
+- Transition 仍在右侧详情面板中编辑，`TargetNodeId` 必须填写目标节点的 `NodeId`。
+- 新增节点会自动生成不重复的 `NodeId`，默认取消窗口为 `0.55 - 0.9`。
+- 所有字段修改都走 Unity `SerializedProperty`，支持 Undo / Dirty。
+- 连续输入字段时 Graph 会延迟约 `0.3` 秒刷新，避免每个字符都重建图。
+- `Fit All` 用于节点较多时快速缩放到完整视图。
+- 第一版 Graph 节点按固定网格自动排列，不保存手动节点位置；复杂连招树的自定义布局留到后续 Editor metadata 阶段。
+- 校验面板会顺着节点检查 `ComboAction` / `AnimateAsset` 的关键配置，例如未绑定动画、TimelineEvent 时间越界、Hitbox 事件缺少 `PayloadId` 等。
+
 ## 运行时使用流程
 
 程序侧推荐流程：
@@ -252,5 +282,5 @@ PlayerRoot
 
 ## 版本
 
-当前模块包版本：`0.4.0`。 
+当前模块包版本：`0.5.0`。 
 Unity 最低版本：`6000.0.0`，项目基准为 Unity 6.0 `6000.0.75f1`。
