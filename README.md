@@ -270,6 +270,43 @@ PlayerRoot
 
 动作取消、预检失败、Commit 失败或动作结束时，`ClearActionState()` 会清空输入缓冲，避免已经失效的旧输入在下一次取消窗口里触发幽灵连招。成功连招切换不走 `ClearActionState()`，只清理旧 Request 的表现和 Hitbox。
 
+## 第六阶段验收清单
+
+第六阶段不再扩展新的战斗动作能力，目标是确认当前 `Runtime + TPCBridge + CombatBridge + Editor` 可以被别人按 README 配置和验证。
+
+Unity 编译检查：
+
+- 打开 Unity 6.0 `6000.0.75f1` 项目后，Console 不应出现 `NiumaAction.Runtime`、`NiumaAction.TPCBridge`、`NiumaAction.CombatBridge`、`NiumaAction.Editor` 的编译错误。
+- `NiumaAction.Runtime` 只引用 `NiumaCore.Runtime` 与 `NiumaAttribute.Runtime`。
+- `NiumaAction.Editor` 只在 Editor 平台启用，`UnityEditor` / `GraphView` 不得出现在 Runtime、TPCBridge、CombatBridge 中。
+
+资产检查：
+
+- 创建 `AnimateAsset`，绑定 `AnimationClip`，配置 `TimelineEvents`。
+- 创建 `ComboAction`，绑定 `AnimateAsset`，填写 `ActionId`、`DamageMultiplier`、`StaminaCost`。
+- 创建 `ComboTreeAsset`，至少添加两个 `ComboNode`，每个节点绑定 `ComboAction`。
+- 在第一个节点的 `Transitions` 中填写 `InputId` 和第二个节点的 `TargetNodeId`。
+- 创建 `MeleeWeaponSource`，填写 `WeaponSourceId`、`BaseDamage`、`HoldStyleId`，并绑定默认 `ComboTreeAsset`。
+
+编辑器检查：
+
+- 选中 `ComboTreeAsset` 时，Inspector 顶部能打开 `Combo Tree Editor`。
+- 左侧节点列表、中间 Graph、右侧详情选中状态同步。
+- 点击 `添加节点 / 复制节点 / 删除节点 / 上移 / 下移` 后，Graph 和校验面板刷新。
+- `Undo / Redo` 后窗口内容同步刷新。
+- 缺失 `TargetNodeId`、重复 `NodeId`、TimelineEvent 时间越界等问题会显示在底部校验面板。
+
+运行时手动验证：
+
+- 核心场景 `ActionRoot` 挂 `NiumaActionController`。
+- 玩家对象或其子物体挂 `NiumaActionTPCBridge`，绑定 `NiumaCharacterController`。
+- 需要 Hitbox 时，同一对象或子物体挂 `NiumaActionCombatBridge`，绑定 `NiumaCombatController` 或开启 `Resolve Combat From Context`。
+- 程序或测试脚本调用 `EquipWeaponSource(actorId, weaponSource)` 后，再调用 `SubmitInput(actorId, inputId)`。
+- 第一段攻击能进入起手节点；取消窗口外输入下一段不会切换；取消窗口内输入下一段能进入目标节点。
+- TPC 拒绝播放时，不应扣资源、不进入动作状态、不打开 Hitbox。
+- `HitboxOpen / HitboxClose` 能通过 CombatBridge 打开和关闭 Combat Hitbox。
+- 动作取消、连招切换或 TPC 中断后，旧 `RequestId` 下已打开的 Hitbox 会被关闭。
+
 ## 当前阶段限制
 
 - 阶段 3 已包含 Runtime 资产、协议、Service、Controller 和 `NiumaAction.TPCBridge`。
@@ -282,5 +319,5 @@ PlayerRoot
 
 ## 版本
 
-当前模块包版本：`0.5.0`。 
+当前模块包版本：`0.6.0`。 
 Unity 最低版本：`6000.0.0`，项目基准为 Unity 6.0 `6000.0.75f1`。
